@@ -8,6 +8,7 @@ fn cli() -> Command {
         .subcommand_required(true)
         .arg_required_else_help(true)
         .allow_external_subcommands(true)
+        .subcommand(Command::new("open").about("opens the task list to view and edit").arg(arg!(-t --"task-list" <PATH> "Specify location of task list. Default is tasks.txt")))
         .subcommand(Command::new("view").about("outputs current tasks").arg(arg!(-t --"task-list" <PATH> "Specify location of task list. Default is tasks.txt")))
         .subcommand(Command::new("add").about("add a new task"))
 }
@@ -16,6 +17,10 @@ fn main() {
     let matches = cli().get_matches();
 
     match matches.subcommand() {
+        Some(("open", sub_matches)) => {
+            let default = "tasks.txt";
+            open();
+        }
         Some(("view", sub_matches)) => {
             let default = "tasks.txt";
             read(sub_matches.get_one::<String>("task-list").unwrap_or(&default.to_string()));
@@ -28,8 +33,12 @@ fn main() {
     }
 }
 
+fn open() {
+    todo!("Implement open command")
+}
+
 fn add() {
-    todo!("Implement add task command");
+    todo!("Implement add command");
 }
 
 fn read(task_list: &String) {
