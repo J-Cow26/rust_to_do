@@ -37,7 +37,12 @@ fn main() {
 
 fn open() {
     read();
+    let pre_addition_text = "\n\nAdd more tasks:\n";
+    println!("{}", pre_addition_text.cyan().italic());
     add();
+    let final_view_text = "\n\nFinal task list:\n";
+    println!("{}", final_view_text.cyan().italic());
+    read();
 }
 
 fn add() {
@@ -73,6 +78,8 @@ fn append_to_file(entry: &String) -> std::io::Result<()> {
 fn read() {
     let file_read = read_file();
     let content = file_read.unwrap();
+    let current_tasks_intro = "Your tasks: \n";
+    println!("{}", current_tasks_intro.cyan().italic());
     display_task(&content);
 }
 
@@ -84,6 +91,6 @@ fn read_file() -> std::io::Result<String> {
 }
 
 fn display_task(task: &String) {
-    let task_formatted = format!("******\n{}\n******", task);
-    println!("{}", task_formatted.cyan());
+    let task_formatted = format!("_________________________\n\n{}\n_________________________", task);
+    println!("{}", task_formatted);
 }
