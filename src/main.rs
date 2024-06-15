@@ -1,6 +1,9 @@
 use clap::{arg, Command};
-use std::fs::File;
+use colored::*;
+use std::fs::{File, OpenOptions};
+use std::io;
 use std::io::prelude::*;
+use std::io::Write;
 
 fn cli() -> Command {
     Command::new("tdman")
@@ -17,13 +20,17 @@ fn main() {
     let matches = cli().get_matches();
 
     match matches.subcommand() {
-        Some(("open", sub_matches)) => {
-            let default = "tasks.txt";
+        Some(("open", _sub_matches)) => {
+            let _default = "tasks.txt";
             open();
         }
         Some(("view", sub_matches)) => {
             let default = "tasks.txt";
-            read(sub_matches.get_one::<String>("task-list").unwrap_or(&default.to_string()));
+            read(
+                sub_matches
+                    .get_one::<String>("task-list")
+                    .unwrap_or(&default.to_string()),
+            );
         }
         Some(("add", _sub_matches)) => {
             add();
@@ -38,7 +45,35 @@ fn open() {
 }
 
 fn add() {
-    todo!("Implement add command");
+    let mut adding_tasks: bool = true;
+    while adding_tasks {
+        // Take task input from user
+        let user_instructions = "Enter task... (enter !done to exit)";
+        println!("{}", user_instructions.cyan());
+        let mut input = String::new();
+        match io::stdin().read_line(&mut input) {
+            Ok(_n) => {
+                if input.contains("!done"){
+                    adding_tasks = false;
+                } else {
+                    let mut entry: String = input;
+                    entry.insert_str(0, "\n");
+                    let _failing_function = append_to_file(&entry); // Find a better way of handling the error case
+                }
+            }
+            Err(error) => println!("error: {error}"),
+        }
+    }
+}
+
+fn append_to_file(entry: &String) -> std::io::Result<()> {
+    let mut data_file = OpenOptions::new()
+        .append(true)
+        .open("task.txt")?;
+
+    // Write to a file
+    data_file.write(entry.as_bytes())?;
+    Ok(())
 }
 
 fn read(task_list: &String) {
