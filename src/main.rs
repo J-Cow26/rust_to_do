@@ -1,10 +1,12 @@
 use clap::{arg, Command};
 use colored::*;
 use dirs::home_dir;
+use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io;
 use std::io::prelude::*;
 use std::io::Write;
+use std::io::{Error, ErrorKind};
 
 fn cli() -> Command {
     Command::new("tdman")
@@ -51,25 +53,33 @@ fn open() {
 
 /// Controller for add command
 fn add() {
-    let mut adding_tasks: bool = true;
-    while adding_tasks {
-        // Take task input from user
-        let user_instructions = "Enter task... (enter !done to exit)";
-        println!("{}", user_instructions.purple());
-        let mut input = String::new();
-        match io::stdin().read_line(&mut input) {
-            Ok(_n) => {
-                if input.contains("!done") {
-                    adding_tasks = false;
-                } else {
-                    let mut entry: String = input;
-                    entry = format!("\n- {}", entry);
-                    let _failing_function = append_to_file(&entry); // Find a better way of handling the error case
+    if !check_task_list_exists() {
+        match File::create(home_dir().unwrap().join(".doit").join("tasks.txt")) {
+            Ok(_file) => {
+                let mut adding_tasks: bool = true;
+
+                while adding_tasks {
+                    // Take task input from user
+                    let user_instructions = "Enter task... (enter !done to exit)";
+                    println!("{}", user_instructions.purple());
+                    let mut input = String::new();
+                    match io::stdin().read_line(&mut input) {
+                        Ok(_n) => {
+                            if input.contains("!done") {
+                                adding_tasks = false;
+                            } else {
+                                let mut entry: String = input;
+                                entry = format!("\n- {}", entry);
+                                let _failing_function = append_to_file(&entry); // Find a better way of handling the error case
+                            }
+                        },
+                        Err(error) => println!("error: {error}"),
+                    }
                 }
-            }
+            },
             Err(error) => println!("error: {error}"),
         }
-    }
+    }    
 }
 
 /// Append task to the end of the file
@@ -94,10 +104,17 @@ fn read() {
 
 /// Reads contents from file
 fn read_file() -> std::io::Result<String> {
-    let mut file = File::open(home_dir().unwrap().join(".doit").join("tasks.txt"))?;
-    let mut content = String::new();
-    file.read_to_string(&mut content)?;
-    Ok(content)
+    if check_task_list_exists() {
+        let mut file = File::open(home_dir().unwrap().join(".doit").join("tasks.txt"))?;
+        let mut content = String::new();
+        file.read_to_string(&mut content)?;
+        Ok(content)
+    } else {
+        Err(Error::new(
+            ErrorKind::NotFound,
+            "No task list found. Make sure you have added at least one entry. Check --help",
+        ))
+    }
 }
 
 /// Formats and displays tasks
@@ -111,7 +128,8 @@ fn display_task(task: &String) {
 
 /// Overwrites task list by creating a empty file on its path
 fn clear() -> std::io::Result<()> {
-    let task_delete_warning = "This action will delete all tasks in your task list. Would you like to continue [y/n]";
+    let task_delete_warning =
+        "This action will delete all tasks in your task list. Would you like to continue [y/n]";
     println!("{}", task_delete_warning.red());
     let mut response = String::new();
     match io::stdin().read_line(&mut response) {
@@ -125,4 +143,14 @@ fn clear() -> std::io::Result<()> {
         Err(error) => println!("error: {error}"),
     }
     Ok(())
+}
+
+fn check_task_list_exists() -> bool {
+    let file_path = home_dir().unwrap().join(".doit").join("tasks.txt");
+
+    if fs::metadata(file_path).is_ok() {
+        return true;
+    } else {
+        return false;
+    }
 }
