@@ -15,6 +15,7 @@ fn cli() -> Command {
         .subcommand(Command::new("open").about("opens the task list to view and edit").arg(arg!(-t --"task-list" <PATH> "Specify location of task list. Default is tasks.txt")))
         .subcommand(Command::new("view").about("outputs current tasks").arg(arg!(-t --"task-list" <PATH> "Specify location of task list. Default is tasks.txt")))
         .subcommand(Command::new("add").about("add a new task"))
+        .subcommand(Command::new("clear").about("clears all tasks from task list"))
 }
 
 fn main() {
@@ -30,11 +31,14 @@ fn main() {
         Some(("add", _sub_matches)) => {
             add();
         }
-
+        Some(("clear", _sub_matches)) => {
+            let _ = clear();
+        }
         _ => unreachable!(),
     }
 }
 
+/// Controller for open command
 fn open() {
     read();
     let pre_addition_text = "\n\nAdd more tasks:\n";
@@ -45,6 +49,7 @@ fn open() {
     read();
 }
 
+/// Controller for add command
 fn add() {
     let mut adding_tasks: bool = true;
     while adding_tasks {
@@ -67,14 +72,18 @@ fn add() {
     }
 }
 
+/// Append task to the end of the file
 fn append_to_file(entry: &String) -> std::io::Result<()> {
-    let mut data_file = OpenOptions::new().append(true).open(home_dir().unwrap().join(".doit").join("tasks.txt"))?;
+    let mut data_file = OpenOptions::new()
+        .append(true)
+        .open(home_dir().unwrap().join(".doit").join("tasks.txt"))?;
 
     // Write to a file
     data_file.write_all(entry.as_bytes())?;
     Ok(())
 }
 
+/// Controller for the read command
 fn read() {
     let file_read = read_file();
     let content = file_read.unwrap();
@@ -83,6 +92,7 @@ fn read() {
     display_task(&content);
 }
 
+/// Reads contents from file
 fn read_file() -> std::io::Result<String> {
     let mut file = File::open(home_dir().unwrap().join(".doit").join("tasks.txt"))?;
     let mut content = String::new();
@@ -90,7 +100,29 @@ fn read_file() -> std::io::Result<String> {
     Ok(content)
 }
 
+/// Formats and displays tasks
 fn display_task(task: &String) {
-    let task_formatted = format!("_________________________\n\n{}\n_________________________", task);
+    let task_formatted = format!(
+        "_________________________\n\n{}\n_________________________",
+        task
+    );
     println!("{}", task_formatted);
+}
+
+/// Overwrites task list by creating a empty file on its path
+fn clear() -> std::io::Result<()> {
+    let task_delete_warning = "This action will delete all tasks in your task list. Would you like to continue [y/n]";
+    println!("{}", task_delete_warning.red());
+    let mut response = String::new();
+    match io::stdin().read_line(&mut response) {
+        Ok(_n) => {
+            if response.to_lowercase().contains("y") {
+                File::create(home_dir().unwrap().join(".doit").join("tasks.txt"))?;
+            } else {
+                std::process::exit(0);
+            }
+        }
+        Err(error) => println!("error: {error}"),
+    }
+    Ok(())
 }
