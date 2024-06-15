@@ -57,7 +57,7 @@ fn add() {
                     adding_tasks = false;
                 } else {
                     let mut entry: String = input;
-                    entry.insert_str(0, "\n");
+                    entry = format!("\n{}", entry);
                     let _failing_function = append_to_file(&entry); // Find a better way of handling the error case
                 }
             }
@@ -72,7 +72,7 @@ fn append_to_file(entry: &String) -> std::io::Result<()> {
         .open("task.txt")?;
 
     // Write to a file
-    data_file.write(entry.as_bytes())?;
+    data_file.write_all(entry.as_bytes())?;
     Ok(())
 }
 
@@ -90,5 +90,6 @@ fn read_file(file: &String) -> std::io::Result<String> {
 }
 
 fn display_task(task: &String) {
-    println!("{}", task);
+    let task_formatted = format!("******\n{}\n******", task);
+    println!("{}", task_formatted.cyan());
 }
