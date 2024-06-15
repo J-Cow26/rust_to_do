@@ -1,5 +1,6 @@
 use clap::{arg, Command};
 use colored::*;
+use dirs::home_dir;
 use std::fs::{File, OpenOptions};
 use std::io;
 use std::io::prelude::*;
@@ -21,16 +22,10 @@ fn main() {
 
     match matches.subcommand() {
         Some(("open", _sub_matches)) => {
-            let _default = "tasks.txt";
             open();
         }
-        Some(("view", sub_matches)) => {
-            let default = "tasks.txt";
-            read(
-                sub_matches
-                    .get_one::<String>("task-list")
-                    .unwrap_or(&default.to_string()),
-            );
+        Some(("view", _sub_matches)) => {
+            read();
         }
         Some(("add", _sub_matches)) => {
             add();
@@ -41,7 +36,8 @@ fn main() {
 }
 
 fn open() {
-    todo!("Implement open command")
+    read();
+    add();
 }
 
 fn add() {
@@ -49,15 +45,15 @@ fn add() {
     while adding_tasks {
         // Take task input from user
         let user_instructions = "Enter task... (enter !done to exit)";
-        println!("{}", user_instructions.cyan());
+        println!("{}", user_instructions.purple());
         let mut input = String::new();
         match io::stdin().read_line(&mut input) {
             Ok(_n) => {
-                if input.contains("!done"){
+                if input.contains("!done") {
                     adding_tasks = false;
                 } else {
                     let mut entry: String = input;
-                    entry = format!("\n{}", entry);
+                    entry = format!("\n- {}", entry);
                     let _failing_function = append_to_file(&entry); // Find a better way of handling the error case
                 }
             }
@@ -67,23 +63,21 @@ fn add() {
 }
 
 fn append_to_file(entry: &String) -> std::io::Result<()> {
-    let mut data_file = OpenOptions::new()
-        .append(true)
-        .open("task.txt")?;
+    let mut data_file = OpenOptions::new().append(true).open(home_dir().unwrap().join(".doit").join("tasks.txt"))?;
 
     // Write to a file
     data_file.write_all(entry.as_bytes())?;
     Ok(())
 }
 
-fn read(task_list: &String) {
-    let file_read = read_file(task_list);
+fn read() {
+    let file_read = read_file();
     let content = file_read.unwrap();
     display_task(&content);
 }
 
-fn read_file(file: &String) -> std::io::Result<String> {
-    let mut file = File::open(file)?;
+fn read_file() -> std::io::Result<String> {
+    let mut file = File::open(home_dir().unwrap().join(".doit").join("tasks.txt"))?;
     let mut content = String::new();
     file.read_to_string(&mut content)?;
     Ok(content)
