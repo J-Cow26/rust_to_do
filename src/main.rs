@@ -134,7 +134,7 @@ fn clear() -> std::io::Result<()> {
     let mut response = String::new();
     match io::stdin().read_line(&mut response) {
         Ok(_n) => {
-            if response.to_lowercase().contains("y") {
+            if response.to_lowercase().contains('y') {
                 File::create(home_dir().unwrap().join(".doit").join("tasks.txt"))?;
             } else {
                 std::process::exit(0);
@@ -147,10 +147,5 @@ fn clear() -> std::io::Result<()> {
 
 fn check_task_list_exists() -> bool {
     let file_path = home_dir().unwrap().join(".doit").join("tasks.txt");
-
-    if fs::metadata(file_path).is_ok() {
-        return true;
-    } else {
-        return false;
-    }
+    return fs::metadata(file_path).is_ok();
 }
