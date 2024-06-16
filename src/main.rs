@@ -55,26 +55,30 @@ fn open() {
 fn add() {
     if !check_task_list_exists() {
         match File::create(home_dir().unwrap().join(".doit").join("tasks.txt")) {
-            Ok(_file) => {
-                let mut adding_tasks: bool = true;
+            Ok(_file) => setup_entry(),
+            Err(error) => println!("error: {error}"),
+        };
+    } else {
+        setup_entry();
+    }
+}
 
-                while adding_tasks {
-                    // Take task input from user
-                    let user_instructions = "Enter task... (enter !done to exit)";
-                    println!("{}", user_instructions.purple());
-                    let mut input = String::new();
-                    match io::stdin().read_line(&mut input) {
-                        Ok(_n) => {
-                            if input.contains("!done") {
-                                adding_tasks = false;
-                            } else {
-                                let mut entry: String = input;
-                                entry = format!("\n- {}", entry);
-                                let _failing_function = append_to_file(&entry); // Find a better way of handling the error case
-                            }
-                        }
-                        Err(error) => println!("error: {error}"),
-                    }
+fn setup_entry() {
+    let mut adding_tasks: bool = true;
+
+    while adding_tasks {
+        // Take task input from user
+        let user_instructions = "Enter task... (enter !done to exit)";
+        println!("{}", user_instructions.purple());
+        let mut input = String::new();
+        match io::stdin().read_line(&mut input) {
+            Ok(_n) => {
+                if input.contains("!done") {
+                    adding_tasks = false;
+                } else {
+                    let mut entry: String = input;
+                    entry = format!("\n- {}", entry);
+                    let _failing_function = append_to_file(&entry); // Find a better way of handling the error case
                 }
             }
             Err(error) => println!("error: {error}"),
@@ -147,5 +151,5 @@ fn clear() -> std::io::Result<()> {
 
 fn check_task_list_exists() -> bool {
     let file_path = home_dir().unwrap().join(".doit").join("tasks.txt");
-    return fs::metadata(file_path).is_ok();
+    fs::metadata(file_path).is_ok()
 }
