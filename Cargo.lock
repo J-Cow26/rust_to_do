@@ -141,6 +141,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "doit"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "colored",
+ "dirs",
+]
+
+[[package]]
 name = "getrandom"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -218,15 +227,6 @@ dependencies = [
  "getrandom",
  "libredox",
  "thiserror",
-]
-
-[[package]]
-name = "rust_to_do"
-version = "0.1.0"
-dependencies = [
- "clap",
- "colored",
- "dirs",
 ]
 
 [[package]]
