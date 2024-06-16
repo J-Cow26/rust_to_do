@@ -1,12 +1,9 @@
 use clap::{arg, Command};
 use colored::*;
 use dirs::home_dir;
-use std::fs;
-use std::fs::{File, OpenOptions};
-use std::io;
+use std::fs::{self, File, OpenOptions};
 use std::io::prelude::*;
-use std::io::Write;
-use std::io::{Error, ErrorKind};
+use std::io::{self, BufRead, BufReader, Error, ErrorKind, Write};
 
 fn cli() -> Command {
     Command::new("tdman")
@@ -17,6 +14,7 @@ fn cli() -> Command {
         .subcommand(Command::new("open").about("opens the task list to view and edit").arg(arg!(-t --"task-list" <PATH> "Specify location of task list. Default is tasks.txt")))
         .subcommand(Command::new("view").about("outputs current tasks").arg(arg!(-t --"task-list" <PATH> "Specify location of task list. Default is tasks.txt")))
         .subcommand(Command::new("add").about("add a new task"))
+        .subcommand(Command::new("remove").about("removes a specified task from task list").arg(arg!(-s --select <NUMBER> "Specify the task number to be removed.").value_parser(clap::value_parser!(usize))))
         .subcommand(Command::new("clear").about("clears all tasks from task list"))
 }
 
@@ -32,6 +30,9 @@ fn main() {
         }
         Some(("add", _sub_matches)) => {
             add();
+        }
+        Some(("remove", sub_matches)) => {
+            let _ = delete_task(sub_matches.get_one::<usize>("select").unwrap().to_owned());
         }
         Some(("clear", _sub_matches)) => {
             let _ = clear();
@@ -77,8 +78,8 @@ fn setup_entry() {
                     adding_tasks = false;
                 } else {
                     let mut entry: String = input;
-                    entry = format!("\n- {}", entry);
-                    let _failing_function = append_to_file(&entry); // Find a better way of handling the error case
+                    entry = format!("- {}", entry);
+                    let _failing_function = append_to_file(entry); // Find a better way of handling the error case
                 }
             }
             Err(error) => println!("error: {error}"),
@@ -87,13 +88,23 @@ fn setup_entry() {
 }
 
 /// Append task to the end of the file
-fn append_to_file(entry: &String) -> std::io::Result<()> {
+fn append_to_file(entry: String) -> std::io::Result<()> {
     let mut data_file = OpenOptions::new()
         .append(true)
         .open(home_dir().unwrap().join(".doit").join("tasks.txt"))?;
 
+    // Count the number of lines in task list
+    let number_of_lines =
+        match fs::read_to_string(home_dir().unwrap().join(".doit").join("tasks.txt")) {
+            Ok(content) => content,
+            Err(e) => format!("{e}"),
+        }
+        .lines()
+        .count() + 1;
+
+    let final_entry = format!("<{}> {}", number_of_lines.to_string(), entry,);
     // Write to a file
-    data_file.write_all(entry.as_bytes())?;
+    data_file.write_all(final_entry.as_bytes())?;
     Ok(())
 }
 
@@ -152,4 +163,55 @@ fn clear() -> std::io::Result<()> {
 fn check_task_list_exists() -> bool {
     let file_path = home_dir().unwrap().join(".doit").join("tasks.txt");
     fs::metadata(file_path).is_ok()
+}
+
+fn delete_task(task_number: usize) -> io::Result<()> {
+    let input_file = home_dir().unwrap().join(".doit").join("tasks.txt");
+    let line_number_to_skip: usize = task_number;
+
+    // Open the input file
+    let input = File::open(&input_file)?;
+    let reader = BufReader::new(input);
+
+    // Create the output file
+    let mut output_file = input_file.clone();
+    output_file.set_extension("tmp");
+    let mut output = File::create(&output_file)?;
+
+    // Read the input file line by line and write to output file
+    for (index, line) in reader.lines().enumerate() {
+        let mut line = line?;
+        if index + 1 != line_number_to_skip {
+            if index + 1 > line_number_to_skip {
+                // Need to decrease line number shown before task
+                let line_number = index.to_string();
+                line = edit_section(&line, &line_number);
+            }
+            writeln!(output, "{}", line)?;
+        }
+    }
+
+    // Replace task-list with new task list without specified line
+    fs::rename(output_file, input_file)?;
+    Ok(())
+}
+
+fn edit_section(original: &str, replacement: &str) -> String {
+    if let (Some(start), Some(end)) = (original.find('<'), original.find('>')) {
+        let mut result = String::new();
+
+        // Add the part before the start position
+        result.push_str(&original[..start + 1]);
+
+        // Add the replacement string
+        result.push_str(replacement);
+
+        // Add the part after the end position
+        result.push_str(&original[end..]);
+
+        result
+    } else {
+        // If no <> are found, return the original string
+        original.to_string()
+    }
 }
