@@ -13,7 +13,7 @@ fn cli() -> Command {
         .about("To do manager - manage your tasks")
         .subcommand_required(true)
         .arg_required_else_help(true)
-        .allow_external_subcommands(true)
+        .allow_external_subcommands(false)
         .subcommand(Command::new("open").about("opens the task list to view and edit").arg(arg!(-t --"task-list" <PATH> "Specify location of task list. Default is tasks.txt")))
         .subcommand(Command::new("view").about("outputs current tasks").arg(arg!(-t --"task-list" <PATH> "Specify location of task list. Default is tasks.txt")))
         .subcommand(Command::new("add").about("add a new task"))
@@ -72,14 +72,14 @@ fn add() {
                                 entry = format!("\n- {}", entry);
                                 let _failing_function = append_to_file(&entry); // Find a better way of handling the error case
                             }
-                        },
+                        }
                         Err(error) => println!("error: {error}"),
                     }
                 }
-            },
+            }
             Err(error) => println!("error: {error}"),
         }
-    }    
+    }
 }
 
 /// Append task to the end of the file
