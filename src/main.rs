@@ -55,6 +55,10 @@ fn open() {
 /// Controller for add command
 fn add() {
     if !check_task_list_exists() {
+        match fs::create_dir_all(home_dir().unwrap().join(".doit")){
+            Ok(()) => println!("Directory created"),
+            Err(error) => eprintln!("{}", error),
+        };
         match File::create(home_dir().unwrap().join(".doit").join("tasks.txt")) {
             Ok(_file) => setup_entry(),
             Err(error) => println!("error: {error}"),
