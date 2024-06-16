@@ -102,7 +102,7 @@ fn append_to_file(entry: String) -> std::io::Result<()> {
         .lines()
         .count() + 1;
 
-    let final_entry = format!("<{}> {}", number_of_lines.to_string(), entry,);
+    let final_entry = format!("<{}> {}", number_of_lines, entry,);
     // Write to a file
     data_file.write_all(final_entry.as_bytes())?;
     Ok(())
