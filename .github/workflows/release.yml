@@ -1,6 +1,9 @@
 on: workflow_dispatch
 name: Create Binaries
 
+env:
+  CRATE_NAME: doit
+
 jobs:
   release:
     name: Release - ${{ matrix.platform.release_for }}
