@@ -16,6 +16,7 @@ fn cli() -> Command {
         .subcommand(Command::new("add").about("add a new task"))
         .subcommand(Command::new("remove").about("removes a specified task from task list").arg(arg!(-s --select <NUMBER> "Specify the task number to be removed.").value_parser(clap::value_parser!(usize))))
         .subcommand(Command::new("clear").about("clears all tasks from task list"))
+        .subcommand(Command::new("new").about("creates a new task list").arg(arg!(-n --"new-list" <PATH> "Specify the name of the new task list")))
 }
 
 fn main() {
@@ -36,6 +37,9 @@ fn main() {
         }
         Some(("clear", _sub_matches)) => {
             let _ = clear();
+        }
+        Some(("new", sub_matches)) => {
+            new_list(sub_matches.get_one::<String>("new-list").unwrap());
         }
         _ => unreachable!(),
     }
@@ -219,3 +223,15 @@ fn edit_section(original: &str, replacement: &str) -> String {
         original.to_string()
     }
 }
+
+fn new_list(list_name: &str){
+    let list_creation_output = "New task list created with the name".cyan();
+    match File::create(home_dir().unwrap().join(".doit").join(list_name)) {
+        Ok(_file) => println!("{} {}", list_creation_output, list_name),
+        Err(error) => println!("error: {error}"),
+    };
+}
+
+
+// TO DO
+// The ability to have multiple task lists
